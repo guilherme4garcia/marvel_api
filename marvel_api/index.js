@@ -29,6 +29,46 @@ const private_key = process.env.PRIVATE_KEY
 const hash = md5(timestamp + private_key + public_key)
 
 
+
+let urls = []
+for(let offset = 0; offset <= 1500; offset += 100)
+{
+    urls.push(axios.get(`http://gateway.marvel.com/v1/public/characters?ts=${timestamp}&apikey=${public_key}&hash=${hash}&limit=100&offset=${offset}`))
+}
+
+
+
+Promise.all(urls)
+.then((resposta) => {
+    
+    let obj_dados = {
+        dados: [
+
+        ]
+    }
+    
+    
+    resposta.forEach(element => {
+        element.data.data.results.forEach(element => {
+            
+            obj_dados.dados.push({id: element.id, name: element.name, comics: element.comics.available})
+
+            Character.adiciona({id: element.id, name: element.name, comics: element.comics.available})
+            
+        })
+        
+    })
+
+    return obj_dados
+    
+})
+
+
+
+
+
+
+
 async function getCharactersList() {
     
     const url = `http://gateway.marvel.com/v1/public/characters?ts=${timestamp}&apikey=${public_key}&hash=${hash}&limit=100`
@@ -58,8 +98,6 @@ async function getCharactersList() {
 
 }
 
-getCharactersList()
-
 
 /// outras requisições
 async function getData() {
@@ -76,11 +114,10 @@ async function getData() {
     // .catch (error => console.log (error))
 }
 
-
 /// retorna um txt com os dados enviados pela API
 async function writeData(){
 
-    fs.writeFile("characters_list.txt", await getCharactersList(), function(err) {
+    fs.writeFile("characters_list.txt", await getAllCharacters(), function(err) {
         if (err) {
             console.log(err);
         }
@@ -89,7 +126,6 @@ async function writeData(){
 
 
 
-//writeData()
 
 
 
